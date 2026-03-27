@@ -1,0 +1,15 @@
+praatio>=6.0.0
+tqdm
+pyyaml
+librosa
+numpy
+scipy
+scikit-learn
+requests
+sqlalchemy>=2.0
+click
+rich
+rich-click
+numpy
+pynini
+huggingface_hub
