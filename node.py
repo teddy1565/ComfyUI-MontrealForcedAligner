@@ -159,6 +159,6 @@ class MFA_AudioToText:
         segments_list.append(temp.copy())
 
         word_concat_list.clear()
-        return (word_concat_list, )
+        return (segments_list, )
                 
             
