@@ -10,7 +10,6 @@ sqlalchemy>=2.0
 click
 rich
 rich-click
-numpy
 pynini
 huggingface_hub
 montreal_forced_aligner
@@ -30,3 +29,5 @@ montreal-forced-aligner
 colorama
 # baumwelch
 ngram
+ninja
+pyparsing
