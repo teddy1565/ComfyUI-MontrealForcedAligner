@@ -89,7 +89,7 @@ class MFA_AudioToText:
 
         mm.unload_all_models()
         mm.soft_empty_cache()
-        
+
         aligner = PretrainedAligner(
             corpus_directory=temp_dir,
             dictionary_path=DICTIONARY_PATH,
@@ -164,6 +164,14 @@ class MFA_AudioToText:
         segments_list.append(temp.copy())
 
         word_concat_list.clear()
+
+        if os.path.exists(out_text_path):
+            os.remove(out_text_path)
+        if os.path.exists(lab_save_path):
+            os.remove(lab_save_path)
+        if os.path.exists(audio_save_path):
+            os.remove(audio_save_path)
+
         return (segments_list, )
                 
             
