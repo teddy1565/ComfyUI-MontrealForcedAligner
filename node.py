@@ -64,6 +64,14 @@ class MFA_AudioToText:
                 }),
                 "MFA_clean_lock": ("BOOLEAN", {
                     "default": False
+                }),
+                "MFA_beam": ("INT", {
+                    "min": 10,
+                    "default": 100
+                }),
+                "MFA_retry_beam": ("INT", {
+                    "min": 40,
+                    "default": 400
                 })
             },
             "hidden": {
@@ -80,7 +88,7 @@ class MFA_AudioToText:
     Montreal Forced Aligner Model, In windows, model path usually is: C:/user/<user_name>/Documents/MFA
     """
     
-    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_size=1, show_verbose=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, MFA_clean_lock=False, unique_id=0):
+    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_size=1, show_verbose=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, MFA_clean_lock=False, MFA_beam=100, MFA_retry_beam=400, unique_id=0):
         
         ACOUSTIC_MODEL_PATH = str(pathlib.Path(ACOUSTIC_MODEL_PATH).resolve())
         DICTIONARY_PATH = str(pathlib.Path(DICTIONARY_PATH).resolve())
@@ -129,7 +137,9 @@ class MFA_AudioToText:
                 export_directory=out_temp_dir,
                 clean=MFA_clean_lock,
                 quiet=MFA_quiet_mode,
-                verbose=MFA_verbose_mode
+                verbose=MFA_verbose_mode,
+                beam=MFA_beam,
+                retry_beam=MFA_retry_beam
             )
             # 設定環境與資料庫 (MFA 3.x 初始化流程)
             aligner.setup()
