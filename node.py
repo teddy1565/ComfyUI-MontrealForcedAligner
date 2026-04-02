@@ -44,8 +44,8 @@ class MFA_AudioToText:
                     "tooltip": "MFA DICTIONARY"
                 }),
                 "segments_size": ("INT", {
-                    "min": 1,
-                    "default": 1,
+                    "min": 5,
+                    "default": 5,
                     "tooltip": "how many char be a segments"
                 }),
             },
