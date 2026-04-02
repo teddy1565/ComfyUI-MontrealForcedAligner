@@ -52,6 +52,9 @@ class MFA_AudioToText:
             "optional": {
                 "show_verbose": ("BOOLEAN", {
                     "default": False
+                }),
+                "show_system_info": ("BOOLEAN", {
+                    "default": False
                 })
             },
             "hidden": {
@@ -68,7 +71,7 @@ class MFA_AudioToText:
     Montreal Forced Aligner Model, In windows, model path usually is: C:/user/<user_name>/Documents/MFA
     """
     
-    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_size=1, show_verbose=False, unique_id=0):
+    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_size=1, show_verbose=False, show_system_info=False, unique_id=0):
         
         ACOUSTIC_MODEL_PATH = str(pathlib.Path(ACOUSTIC_MODEL_PATH).resolve())
         DICTIONARY_PATH = str(pathlib.Path(DICTIONARY_PATH).resolve())
@@ -87,8 +90,26 @@ class MFA_AudioToText:
         with open(lab_save_path, "w", encoding="utf-8") as f:
             f.write(dubbing_draft)
 
+        if show_system_info == True:
+            if torch.cuda.is_available():
+                device = torch.cuda.current_device()
+                print("========> BEFORE RELEASE:")
+                print("device:", device)
+                print("name:", torch.cuda.get_device_name(device))
+                print("allocated GB:", torch.cuda.memory_allocated(device) / 1024**3)
+                print("reserved GB:", torch.cuda.memory_reserved(device) / 1024**3)
+
         mm.unload_all_models()
         mm.soft_empty_cache()
+
+        if show_system_info == True:
+            if torch.cuda.is_available():
+                device = torch.cuda.current_device()
+                print("========> AFTER RELEASE:")
+                print("device:", device)
+                print("name:", torch.cuda.get_device_name(device))
+                print("allocated GB:", torch.cuda.memory_allocated(device) / 1024**3)
+                print("reserved GB:", torch.cuda.memory_reserved(device) / 1024**3)
 
         aligner = PretrainedAligner(
             corpus_directory=temp_dir,
