@@ -23,3 +23,10 @@ spacy-pkuseg
 dragonmapper
 hanziconv
 montreal-forced-aligner
+# kaldi
+# pykaldi
+# openfst-python
+# openfst
+colorama
+# baumwelch
+ngram
