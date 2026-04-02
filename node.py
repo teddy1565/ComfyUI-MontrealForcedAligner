@@ -16,6 +16,8 @@ import comfy.utils
 import comfy_execution
 from server import PromptServer
 import tgt
+from montreal_forced_aligner.alignment.pretrained import PretrainedAligner
+import comfy.model_management as mm
 
 
 
@@ -67,7 +69,7 @@ class MFA_AudioToText:
     """
     
     def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_size=1, show_verbose=False, unique_id=0):
-        from montreal_forced_aligner.alignment.pretrained import PretrainedAligner
+        
         ACOUSTIC_MODEL_PATH = str(pathlib.Path(ACOUSTIC_MODEL_PATH).resolve())
         DICTIONARY_PATH = str(pathlib.Path(DICTIONARY_PATH).resolve())
         temp_dir = folder_paths.get_temp_directory()
@@ -85,6 +87,9 @@ class MFA_AudioToText:
         with open(lab_save_path, "w", encoding="utf-8") as f:
             f.write(dubbing_draft)
 
+        mm.unload_all_models()
+        mm.soft_empty_cache()
+        
         aligner = PretrainedAligner(
             corpus_directory=temp_dir,
             dictionary_path=DICTIONARY_PATH,
