@@ -55,6 +55,12 @@ class MFA_AudioToText:
                 }),
                 "show_system_info": ("BOOLEAN", {
                     "default": False
+                }),
+                "MFA_quiet_mode": ("BOOLEAN", {
+                    "default": True
+                }),
+                "MFA_verbose_mode": ("BOOLEAN", {
+                    "default": False
                 })
             },
             "hidden": {
@@ -71,7 +77,7 @@ class MFA_AudioToText:
     Montreal Forced Aligner Model, In windows, model path usually is: C:/user/<user_name>/Documents/MFA
     """
     
-    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_size=1, show_verbose=False, show_system_info=False, unique_id=0):
+    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_size=1, show_verbose=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, unique_id=0):
         
         ACOUSTIC_MODEL_PATH = str(pathlib.Path(ACOUSTIC_MODEL_PATH).resolve())
         DICTIONARY_PATH = str(pathlib.Path(DICTIONARY_PATH).resolve())
@@ -116,7 +122,9 @@ class MFA_AudioToText:
             dictionary_path=DICTIONARY_PATH,
             acoustic_model_path=ACOUSTIC_MODEL_PATH,
             export_directory=out_temp_dir,
-            clean=True
+            clean=True,
+            quiet=MFA_quiet_mode,
+            verbose=MFA_verbose_mode
         )
 
         # 設定環境與資料庫 (MFA 3.x 初始化流程)
