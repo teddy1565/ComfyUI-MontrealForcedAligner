@@ -7,6 +7,7 @@ import numpy as np
 import uuid
 import torchaudio
 import torch
+import pathlib
 
 
 import nodes
@@ -67,7 +68,8 @@ class MFA_AudioToText:
     
     def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_size=1, show_verbose=False, unique_id=0):
         from montreal_forced_aligner.alignment.pretrained import PretrainedAligner
-
+        ACOUSTIC_MODEL_PATH = str(pathlib.Path(ACOUSTIC_MODEL_PATH).resolve())
+        DICTIONARY_PATH = str(pathlib.Path(DICTIONARY_PATH).resolve())
         temp_dir = folder_paths.get_temp_directory()
         out_temp_dir = os.path.join(temp_dir, f"mfa-output-data")
         temp_dir = os.path.join(temp_dir, f"mfa-corpus-data")
