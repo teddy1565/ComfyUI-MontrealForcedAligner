@@ -19,3 +19,7 @@ soundfile
 torchaudio
 torch
 pypinyin
+spacy-pkuseg
+dragonmapper
+hanziconv
+montreal-forced-aligner
