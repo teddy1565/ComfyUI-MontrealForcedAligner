@@ -120,26 +120,42 @@ class MFA_AudioToText:
                 print("allocated GB:", torch.cuda.memory_allocated(device) / 1024**3)
                 print("reserved GB:", torch.cuda.memory_reserved(device) / 1024**3)
 
-        aligner = PretrainedAligner(
-            corpus_directory=temp_dir,
-            dictionary_path=DICTIONARY_PATH,
-            acoustic_model_path=ACOUSTIC_MODEL_PATH,
-            export_directory=out_temp_dir,
-            clean=MFA_clean_lock,
-            quiet=MFA_quiet_mode,
-            verbose=MFA_verbose_mode
-        )
+        aligner = None
+        try:
+            aligner = PretrainedAligner(
+                corpus_directory=temp_dir,
+                dictionary_path=DICTIONARY_PATH,
+                acoustic_model_path=ACOUSTIC_MODEL_PATH,
+                export_directory=out_temp_dir,
+                clean=MFA_clean_lock,
+                quiet=MFA_quiet_mode,
+                verbose=MFA_verbose_mode
+            )
+            # 設定環境與資料庫 (MFA 3.x 初始化流程)
+            aligner.setup()
+            
+            # 執行強制對齊
+            aligner.align()
+            
+            # 匯出結果 (TextGrid)
+            aligner.export_files(out_temp_dir)
+            print("對齊完成，TextGrid 已匯出至:", out_temp_dir)
+            print("Align Done, TextGrid Export To:", out_temp_dir)
+        except Exception as e:
+            print(f"MFA 執行出錯: {e}")
+            raise e
+        finally:
+        # 這是解決 WinError 32 的關鍵
+            if aligner is not None:
+                try:
+                    # 關閉資料庫連接並清理臨時檔案
+                    aligner.cleanup() 
+                    # 徹底銷毀物件
+                    del aligner 
+                except:
+                    pass
 
-        # 設定環境與資料庫 (MFA 3.x 初始化流程)
-        aligner.setup()
         
-        # 執行強制對齊
-        aligner.align()
-        
-        # 匯出結果 (TextGrid)
-        aligner.export_files(out_temp_dir)
-        print("對齊完成，TextGrid 已匯出至:", out_temp_dir)
-        print("Align Done, TextGrid Export To:", out_temp_dir)
 
         out_text_path = os.path.join(out_temp_dir, f"{mfa_corpus_headname}.TextGrid")
         tg = tgt.read_textgrid(out_text_path)
