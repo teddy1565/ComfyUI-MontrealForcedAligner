@@ -13,3 +13,9 @@ rich-click
 numpy
 pynini
 huggingface_hub
+montreal_forced_aligner
+tgt
+soundfile
+torchaudio
+torch
+pypinyin
