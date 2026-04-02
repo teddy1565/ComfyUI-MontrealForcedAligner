@@ -60,7 +60,7 @@ class MFA_AudioToText:
     RETURN_TYPES = ("whisper_alignment",)
     RETURN_NAMES = ("segments_alignment",)
     CATEGORY = f'{MAIN_CATEGORY}'
-    FUNCTION = "audioToString",
+    FUNCTION = "audioToString"
     DESCRIPTION = \
     """
     Montreal Forced Aligner Model, In windows, model path usually is: C:/user/<user_name>/Documents/MFA
