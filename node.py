@@ -59,6 +59,18 @@ class MFA_AudioToText:
                     "default": 25,
                     "tooltip": "When performing field splitting, the maximum number of characters in each field is limited."
                 }),
+                "FILTER_CHAR_spn": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Filter out 'Spoken Noise' (spn) tags. MFA uses 'spn' for coughs, breaths, or unrecognizable sounds. Enabling this prevents noise from interfering with text alignment."
+                }),
+                "FILTER_CHAR_sil": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Filter out 'Silence' (sil) tags. Represents pauses or environment noise. While 'sil' is useful for segmentation, filtering it out ensures the text-to-audio mapping remains focused on actual speech."
+                }),
+                "FILTER_CHAR_unk": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Filter out 'Unknown' (unk) tags. These occur for OOV (Out-of-Vocabulary) words or unclear speech. Enabling this allows the ASR Mapper to use DP algorithms to correctly fill in original text at these gaps."
+                })
             },
             "optional": {
                 "show_verbose": ("BOOLEAN", {
@@ -102,7 +114,7 @@ class MFA_AudioToText:
     Montreal Forced Aligner Model, In windows, model path usually is: C:/user/<user_name>/Documents/MFA
     """
     
-    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_merge_and_cutoff_seconds=0.5, enable_auto_split_segments=True, segments_size=25, show_verbose=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, MFA_clean_lock=True, MFA_beam=100, MFA_retry_beam=400, unique_id=0):
+    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_merge_and_cutoff_seconds=0.5, enable_auto_split_segments=True, segments_size=25, FILTER_CHAR_spn=True, FILTER_CHAR_sil=True, FILTER_CHAR_unk=True, show_verbose=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, MFA_clean_lock=True, MFA_beam=100, MFA_retry_beam=400, unique_id=0):
         
 
         if isinstance(segments_merge_and_cutoff_seconds, float) == True and math.isnan(segments_merge_and_cutoff_seconds) == True:
@@ -204,10 +216,21 @@ class MFA_AudioToText:
         segments_list = []
         word_concat_list = []
         print("--- Words Timestamp ---")
+
+
+        filter_word_list = []
+
+        if FILTER_CHAR_spn == True:
+            filter_word_list.append("spn")
+        if FILTER_CHAR_sil == True:
+            filter_word_list.append("sil")
+        if FILTER_CHAR_unk == True:
+            filter_word_list.append("unk")
+
         for interval in words_tier:
             # 過濾掉空白或靜音標記 (spn: 標音外詞, sil: 靜音)
             # if interval.text not in ['', 'spn', 'sil']:
-            if interval.text not in ['spn', 'sil', 'unk']:
+            if interval.text not in filter_word_list:
                 if show_verbose == True:
                     print(f"[{interval.start_time:.3f} - {interval.end_time:.3f}] {interval.text}")
                 
