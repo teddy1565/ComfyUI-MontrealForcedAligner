@@ -179,7 +179,7 @@ class MFA_AudioToText:
         for interval in words_tier:
             # 過濾掉空白或靜音標記 (spn: 標音外詞, sil: 靜音)
             # if interval.text not in ['', 'spn', 'sil']:
-            if interval.text not in ['spn', 'sil']:
+            if interval.text not in ['spn', 'sil', 'unk']:
                 if show_verbose == True:
                     print(f"[{interval.start_time:.3f} - {interval.end_time:.3f}] {interval.text}")
                 
