@@ -240,26 +240,49 @@ class MFA_AudioToText:
             if interval.text == '' and ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
                 temp = {
                     "value": "",
-                    "start": 0,
+                    "start": -1,
                     "end": 0
                 }
 
                 if enable_auto_split_segments == False:
-                    temp["start"] = word_concat_list[0]["start"] if len(word_concat_list) > 0 else 0
+
+                    first_valid_start = 0
+                    for w in word_concat_list:
+                        if w["value"] != "":
+                            first_valid_start = w["start"]
+                            break
+                    temp["start"] = first_valid_start
+
                     for word in word_concat_list:
                         temp["value"] = temp["value"] + word["value"]
                         temp["end"] = word["end"]
+                    
+                    if temp["value"] != "": 
+                        segments_list.append(temp.copy())
+
                 else:
+
                     for word in word_concat_list:
+
                         if len(temp["value"]) + len(word["value"]) > segments_size:
                             segments_list.append(temp.copy())
                             temp["value"] = ""
-                            temp["start"] = word["start"]
+                            temp["start"] = -1
+                        
+                        if temp["start"] == -1:
+                            if word["value"] != "":
+                                temp["start"] = word["start"]
+                            else:
+                                # 若新片段開頭遇到被過濾的靜音，直接跳過，不提早拉長字幕的顯示起點
+                                continue
+                        
                         temp["value"] = temp["value"] + word["value"]
                         temp["end"] = word["end"]
+                    
+                    
                 
-
-                segments_list.append(temp.copy())
+                    if temp["value"] != "":
+                        segments_list.append(temp.copy())
 
                 word_concat_list.clear()
             
@@ -272,17 +295,26 @@ class MFA_AudioToText:
         
         temp = {
             "value": "",
-            "start": 0,
+            "start": -1,
             "end": 0
         }
         for word in word_concat_list:
             if len(temp["value"]) + len(word["value"]) > segments_size:
                 segments_list.append(temp.copy())
                 temp["value"] = ""
-                temp["start"] = word["start"]
+                temp["start"] = -1
+            
+            if temp["start"] == -1:
+                if word["value"] != "":
+                    temp["start"] = word["start"]
+                else:
+                    continue
+            
             temp["value"] = temp["value"] + word["value"]
             temp["end"] = word["end"]
-        segments_list.append(temp.copy())
+
+        if temp["value"] != "":
+            segments_list.append(temp.copy())
 
         word_concat_list.clear()
 
