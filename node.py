@@ -236,7 +236,7 @@ class MFA_AudioToText:
         if FILTER_CHAR_sil == True:
             filter_word_list.append("sil")
         if FILTER_CHAR_unk == True:
-            filter_word_list.append("unk")
+            filter_word_list.append("<unk>")
 
         log_fd = None
         if export_verbose_log == True:
