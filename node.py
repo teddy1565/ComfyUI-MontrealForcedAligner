@@ -51,6 +51,11 @@ class MFA_AudioToText:
                     "min": 0.1,
                     "tooltip": "Unit: (s), The alignment provided by MFA is based on each individual word. Therefore, when generating subtitles, merging and segmenting are required. The basis for merging and segmenting mainly occurs during breaths in speech. This parameter determines the interval between breaths at which segmentation is necessary."
                 }),
+                "segments_fill_space_seconds": ("FLOAT", {
+                    "default": 0.2,
+                    "min": 0.1,
+                    "tooltip": "When the breathing interval is greater than this value but less than the cutoff decision interval, add a space at the end of the word to improve the readability of the subtitles."
+                }),
                 "enable_auto_split_segments": ("BOOLEAN", {
                     "default": True,
                     "tooltip": "If a single field is too long, should it be segmented? If not, the subtitle for a single sentence might be very long."
@@ -119,9 +124,9 @@ class MFA_AudioToText:
     Montreal Forced Aligner Model, In windows, model path usually is: C:/user/<user_name>/Documents/MFA
     """
     
-    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_merge_and_cutoff_seconds=0.5, enable_auto_split_segments=True, segments_size=25, FILTER_CHAR_spn=True, FILTER_CHAR_sil=True, FILTER_CHAR_unk=True, show_verbose=False, export_verbose_log=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, MFA_clean_lock=True, MFA_beam=100, MFA_retry_beam=400, unique_id=0):
+    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_merge_and_cutoff_seconds=0.5, segments_fill_space_seconds=0.2, enable_auto_split_segments=True, segments_size=25, FILTER_CHAR_spn=True, FILTER_CHAR_sil=True, FILTER_CHAR_unk=True, show_verbose=False, export_verbose_log=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, MFA_clean_lock=True, MFA_beam=100, MFA_retry_beam=400, unique_id=0):
         
-
+        # segments_merge_and_cutoff_seconds
         if isinstance(segments_merge_and_cutoff_seconds, float) == True and math.isnan(segments_merge_and_cutoff_seconds) == True:
             segments_merge_and_cutoff_seconds = 0.5
         elif isinstance(segments_merge_and_cutoff_seconds, float) == False:
@@ -134,6 +139,20 @@ class MFA_AudioToText:
                 segments_merge_and_cutoff_seconds = 0.5
         elif segments_merge_and_cutoff_seconds < 0.1:
             segments_merge_and_cutoff_seconds = 0.5
+
+        # segments_fill_space_seconds
+        if isinstance(segments_fill_space_seconds, float) == True and math.isnan(segments_fill_space_seconds) == True:
+            segments_fill_space_seconds = 0.2
+        elif isinstance(segments_fill_space_seconds, float) == False:
+            try:
+                segments_fill_space_seconds = float(segments_fill_space_seconds)
+            except:
+                segments_fill_space_seconds = 0.2
+            
+            if math.isnan(segments_fill_space_seconds) == True:
+                segments_fill_space_seconds = 0.2
+        elif segments_fill_space_seconds < 0.1:
+            segments_fill_space_seconds = 0.2
 
         output_dir_root = folder_paths.get_output_directory()
         output_dir = os.path.join(output_dir_root, "ComfyUI-MontrealForcedAligner")
@@ -260,8 +279,10 @@ class MFA_AudioToText:
                 
                 # filter '\n'
                 interval.text = interval.text.replace("\n", "")
-                
-                if ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
+                interval_diff_time = interval.end_time - interval.start_time
+                if (interval_diff_time < segments_merge_and_cutoff_seconds) and (interval_diff_time > segments_fill_space_seconds):
+                    interval.text = f"{interval.text} "
+                elif (interval_diff_time >= segments_merge_and_cutoff_seconds):
                     temp = {
                         "value": "",
                         "start": word_concat_list[0]["start"] if len(word_concat_list) > 0 else 0,
