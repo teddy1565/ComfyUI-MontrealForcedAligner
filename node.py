@@ -8,6 +8,7 @@ import uuid
 import torchaudio
 import torch
 import pathlib
+from datetime import datetime
 
 
 import nodes
@@ -76,6 +77,10 @@ class MFA_AudioToText:
                 "show_verbose": ("BOOLEAN", {
                     "default": False
                 }),
+                "export_verbose_log": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "export MFA TextGrid Context"
+                }),
                 "show_system_info": ("BOOLEAN", {
                     "default": False
                 }),
@@ -114,7 +119,7 @@ class MFA_AudioToText:
     Montreal Forced Aligner Model, In windows, model path usually is: C:/user/<user_name>/Documents/MFA
     """
     
-    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_merge_and_cutoff_seconds=0.5, enable_auto_split_segments=True, segments_size=25, FILTER_CHAR_spn=True, FILTER_CHAR_sil=True, FILTER_CHAR_unk=True, show_verbose=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, MFA_clean_lock=True, MFA_beam=100, MFA_retry_beam=400, unique_id=0):
+    def audioToString(self, audio, dubbing_draft, ACOUSTIC_MODEL_PATH, DICTIONARY_PATH, segments_merge_and_cutoff_seconds=0.5, enable_auto_split_segments=True, segments_size=25, FILTER_CHAR_spn=True, FILTER_CHAR_sil=True, FILTER_CHAR_unk=True, show_verbose=False, export_verbose_log=False, show_system_info=False, MFA_quiet_mode=True, MFA_verbose_mode=False, MFA_clean_lock=True, MFA_beam=100, MFA_retry_beam=400, unique_id=0):
         
 
         if isinstance(segments_merge_and_cutoff_seconds, float) == True and math.isnan(segments_merge_and_cutoff_seconds) == True:
@@ -129,6 +134,12 @@ class MFA_AudioToText:
                 segments_merge_and_cutoff_seconds = 0.5
         elif segments_merge_and_cutoff_seconds < 0.1:
             segments_merge_and_cutoff_seconds = 0.5
+
+        output_dir_root = folder_paths.get_output_directory()
+        output_dir = os.path.join(output_dir_root, "ComfyUI-MontrealForcedAligner")
+        os.makedirs(output_dir, exist_ok=True)
+        ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_save_path = os.path.join(output_dir, f"{ts}.log")
         
 
         ACOUSTIC_MODEL_PATH = str(pathlib.Path(ACOUSTIC_MODEL_PATH).resolve())
@@ -227,71 +238,84 @@ class MFA_AudioToText:
         if FILTER_CHAR_unk == True:
             filter_word_list.append("unk")
 
-        for interval in words_tier:
-            # 過濾掉空白或靜音標記 (spn: 標音外詞, sil: 靜音)
-            # if interval.text not in ['', 'spn', 'sil']:
-            # if interval.text not in filter_word_list:
-            if show_verbose == True:
-                print(f"[{interval.start_time:.3f} - {interval.end_time:.3f}] {interval.text}")
-            
-            # filter '\n'
-            interval.text = interval.text.replace("\n", "")
-            
-            if interval.text == '' and ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
-                temp = {
-                    "value": "",
-                    "start": -1,
-                    "end": 0
-                }
+        log_fd = None
+        if export_verbose_log == True:
+            log_fd = open(log_save_path, "w", encoding="utf-8")
 
-                if enable_auto_split_segments == False:
-
-                    first_valid_start = 0
-                    for w in word_concat_list:
-                        if w["value"] != "":
-                            first_valid_start = w["start"]
-                            break
-                    temp["start"] = first_valid_start
-
-                    for word in word_concat_list:
-                        temp["value"] = temp["value"] + word["value"]
-                        temp["end"] = word["end"]
-                    
-                    if temp["value"] != "": 
-                        segments_list.append(temp.copy())
-
-                else:
-
-                    for word in word_concat_list:
-
-                        if len(temp["value"]) + len(word["value"]) > segments_size:
-                            segments_list.append(temp.copy())
-                            temp["value"] = ""
-                            temp["start"] = -1
-                        
-                        if temp["start"] == -1:
-                            if word["value"] != "":
-                                temp["start"] = word["start"]
-                            else:
-                                # 若新片段開頭遇到被過濾的靜音，直接跳過，不提早拉長字幕的顯示起點
-                                continue
-                        
-                        temp["value"] = temp["value"] + word["value"]
-                        temp["end"] = word["end"]
-                    
+        try:
+            for interval in words_tier:
+                # 過濾掉空白或靜音標記 (spn: 標音外詞, sil: 靜音)
+                # if interval.text not in ['', 'spn', 'sil']:
+                # if interval.text not in filter_word_list:
+                log_ln = f"[{interval.start_time:.3f} - {interval.end_time:.3f}] {interval.text}\n"
+                if show_verbose == True:
+                    print(log_ln, end="")
+                if export_verbose_log == True and log_fd:
+                    log_fd.write(log_ln)
+                
                     
                 
-                    if temp["value"] != "":
-                        segments_list.append(temp.copy())
+                # filter '\n'
+                interval.text = interval.text.replace("\n", "")
+                
+                if interval.text == '' and ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
+                    temp = {
+                        "value": "",
+                        "start": -1,
+                        "end": 0
+                    }
 
-                word_concat_list.clear()
-            
-            item = {
-                "value": interval.text if interval.text not in filter_word_list else "",
-                "start": interval.start_time, # 建議四捨五入到毫秒
-                "end": interval.end_time
-            }
-            word_concat_list.append(item)
+                    if enable_auto_split_segments == False:
+
+                        first_valid_start = 0
+                        for w in word_concat_list:
+                            if w["value"] != "":
+                                first_valid_start = w["start"]
+                                break
+                        temp["start"] = first_valid_start
+
+                        for word in word_concat_list:
+                            temp["value"] = temp["value"] + word["value"]
+                            temp["end"] = word["end"]
+                        
+                        if temp["value"] != "": 
+                            segments_list.append(temp.copy())
+
+                    else:
+
+                        for word in word_concat_list:
+
+                            if len(temp["value"]) + len(word["value"]) > segments_size:
+                                segments_list.append(temp.copy())
+                                temp["value"] = ""
+                                temp["start"] = -1
+                            
+                            if temp["start"] == -1:
+                                if word["value"] != "":
+                                    temp["start"] = word["start"]
+                                else:
+                                    # 若新片段開頭遇到被過濾的靜音，直接跳過，不提早拉長字幕的顯示起點
+                                    continue
+                            
+                            temp["value"] = temp["value"] + word["value"]
+                            temp["end"] = word["end"]
+                        
+                        
+                    
+                        if temp["value"] != "":
+                            segments_list.append(temp.copy())
+
+                    word_concat_list.clear()
+                
+                item = {
+                    "value": interval.text if interval.text not in filter_word_list else "",
+                    "start": interval.start_time, # 建議四捨五入到毫秒
+                    "end": interval.end_time
+                }
+                word_concat_list.append(item)
+        finally:
+            if log_fd:
+                log_fd.close()
         
         temp = {
             "value": "",
