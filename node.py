@@ -234,6 +234,9 @@ class MFA_AudioToText:
             if show_verbose == True:
                 print(f"[{interval.start_time:.3f} - {interval.end_time:.3f}] {interval.text}")
             
+            # filter '\n'
+            interval.text = interval.text.replace("\n", "")
+            
             if interval.text == '' and ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
                 temp = {
                     "value": "",
