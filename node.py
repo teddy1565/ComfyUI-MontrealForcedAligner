@@ -284,7 +284,7 @@ class MFA_AudioToText:
                 # filter '\n'
                 interval.text = interval.text.replace("\n", "")
                 interval_diff_time = interval.start_time - last_word_time
-                last_word_time = interval.start_time
+                last_word_time = interval.end_time
 
                 if (interval_diff_time < segments_merge_and_cutoff_seconds) and (interval_diff_time > segments_fill_space_seconds):
                     interval.text = f"{interval.text} "
