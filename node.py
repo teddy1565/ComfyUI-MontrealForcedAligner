@@ -240,7 +240,10 @@ class MFA_AudioToText:
 
         log_fd = None
         if export_verbose_log == True:
-            log_fd = open(log_save_path, "w", encoding="utf-8")
+            try:
+                log_fd = open(log_save_path, "w", encoding="utf-8")
+            except Exception as e:
+                print(e)
 
         try:
             for interval in words_tier:
