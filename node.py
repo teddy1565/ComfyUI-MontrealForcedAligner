@@ -261,7 +261,7 @@ class MFA_AudioToText:
                 # filter '\n'
                 interval.text = interval.text.replace("\n", "")
                 
-                if interval.text == "" and ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
+                if ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
                     temp = {
                         "value": "",
                         "start": word_concat_list[0]["start"] if len(word_concat_list) > 0 else 0,
