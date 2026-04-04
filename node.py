@@ -230,42 +230,42 @@ class MFA_AudioToText:
         for interval in words_tier:
             # 過濾掉空白或靜音標記 (spn: 標音外詞, sil: 靜音)
             # if interval.text not in ['', 'spn', 'sil']:
-            if interval.text not in filter_word_list:
-                if show_verbose == True:
-                    print(f"[{interval.start_time:.3f} - {interval.end_time:.3f}] {interval.text}")
-                
-                if interval.text == '' and ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
-                    temp = {
-                        "value": "",
-                        "start": 0,
-                        "end": 0
-                    }
-
-                    if enable_auto_split_segments == False:
-                        temp["start"] = word_concat_list[0]["start"] if len(word_concat_list) > 0 else 0
-                        for word in word_concat_list:
-                            temp["value"] = temp["value"] + word["value"]
-                            temp["end"] = word["end"]
-                    else:
-                        for word in word_concat_list:
-                            if len(temp["value"]) + len(word["value"]) > segments_size:
-                                segments_list.append(temp.copy())
-                                temp["value"] = ""
-                                temp["start"] = word["start"]
-                            temp["value"] = temp["value"] + word["value"]
-                            temp["end"] = word["end"]
-                    
-
-                    segments_list.append(temp.copy())
-
-                    word_concat_list.clear()
-                
-                item = {
-                    "value": interval.text,
-                    "start": interval.start_time, # 建議四捨五入到毫秒
-                    "end": interval.end_time
+            # if interval.text not in filter_word_list:
+            if show_verbose == True:
+                print(f"[{interval.start_time:.3f} - {interval.end_time:.3f}] {interval.text}")
+            
+            if interval.text == '' and ((interval.end_time-interval.start_time) > segments_merge_and_cutoff_seconds):
+                temp = {
+                    "value": "",
+                    "start": 0,
+                    "end": 0
                 }
-                word_concat_list.append(item)
+
+                if enable_auto_split_segments == False:
+                    temp["start"] = word_concat_list[0]["start"] if len(word_concat_list) > 0 else 0
+                    for word in word_concat_list:
+                        temp["value"] = temp["value"] + word["value"]
+                        temp["end"] = word["end"]
+                else:
+                    for word in word_concat_list:
+                        if len(temp["value"]) + len(word["value"]) > segments_size:
+                            segments_list.append(temp.copy())
+                            temp["value"] = ""
+                            temp["start"] = word["start"]
+                        temp["value"] = temp["value"] + word["value"]
+                        temp["end"] = word["end"]
+                
+
+                segments_list.append(temp.copy())
+
+                word_concat_list.clear()
+            
+            item = {
+                "value": interval.text if interval.text not in filter_word_list else "",
+                "start": interval.start_time, # 建議四捨五入到毫秒
+                "end": interval.end_time
+            }
+            word_concat_list.append(item)
         
         temp = {
             "value": "",
