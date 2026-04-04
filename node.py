@@ -264,7 +264,11 @@ class MFA_AudioToText:
             except Exception as e:
                 print(e)
 
+        last_word_time = words_tier[0].start_time if len(words_tier) > 0 else 0
+
         try:
+
+            
             for interval in words_tier:
                 # 過濾掉空白或靜音標記 (spn: 標音外詞, sil: 靜音)
                 # if interval.text not in ['', 'spn', 'sil']:
@@ -279,7 +283,9 @@ class MFA_AudioToText:
                 
                 # filter '\n'
                 interval.text = interval.text.replace("\n", "")
-                interval_diff_time = interval.end_time - interval.start_time
+                interval_diff_time = interval.start_time - last_word_time
+                last_word_time = interval.start_time
+
                 if (interval_diff_time < segments_merge_and_cutoff_seconds) and (interval_diff_time > segments_fill_space_seconds):
                     interval.text = f"{interval.text} "
                 elif (interval_diff_time >= segments_merge_and_cutoff_seconds):
